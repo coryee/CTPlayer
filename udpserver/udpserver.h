@@ -6,6 +6,7 @@
 #include "mbuffer.h"
 #include "threadutil.h"
 
+
 #ifndef _WIN32
 typedef SOCKET int;
 #endif
@@ -22,12 +23,15 @@ typedef SOCKET int;
 
 // error code
 #define UDPS_EC_OK				0
-#define UDPS_EC_FAILIED			-1
+#define UDPS_EC_FAILURE			-1
 
 class UDPServer
 {
 public:
-	explicit UDPServer(char *pcIPAddr, unsigned int uiPort, int iMode = UDPS_WORK_MODE_DEFAULT);
+	UDPServer();
+	UDPServer(char *pcIPAddr, unsigned int uiPort, int iMode = UDPS_WORK_MODE_DEFAULT);
+	int setLocalIPPort(char *pcIPAddr, unsigned int uiPort);
+	int setMode(int iMode);
 	int setSYSBuffer(MBUFFERSYSBuffer *pSYSBuffer);
 	int setFilePath(const char *pcFilePath);
 
@@ -35,6 +39,9 @@ public:
 	int stop();
 	int execute();
 	
+	int recv2file();
+	int recv2buffer();
+
 	int send(unsigned char * pucBuffer, unsigned int iBufferSize);
 	int recv(unsigned char * pucBuffer, unsigned int iBufferSize);
 	int getPeerAddrInfo(struct sockaddr * peerSockAddr, int *piAddrLen);
