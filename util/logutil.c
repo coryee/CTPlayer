@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <string.h>
-
 #ifdef _WIN32
 #include <windows.h> 
 #include <io.h>  
@@ -10,24 +9,28 @@
 #include <sys/time.h> 
 #endif
 
+#include "mutexutil.h"
+
 #ifdef _WIN32
 #define snprintf sprintf_s
 #endif
 
 #include "logutil.h"
 
+#define CTLOG_FILE_NAME_DEFAULE	"default.log"
+#define CTLOG_MAX_BUFFER_SIZE	512
+
 struct CTLogContext {
 	CTLogLevel	level;
 	CTLogMode	mode;
 	FILE		*fpLog;
 	int			bInit;
+	CTMutex		*pMutex;
+	char		pBuffer[CTLOG_MAX_BUFFER_SIZE];
 };
 
-#define CTLOG_FILE_NAME_DEFAULE	"default.log"
-
 static CTLogContext gLogContext;
-static char gLogBuffer[512];
-char CTLogLevelString[][16] = {
+static char CTLogLevelString[][16] = {
 	"DEBUG", 
 	"INFO",
 	"ERROR"
@@ -49,21 +52,25 @@ void CTLogOpenConsole()
 
 int CTLogInit(CTLogLevel level, CTLogMode mode, char *pcFileName)
 {
+	CTLogContext *pLogCtx = &gLogContext;
 	const char *pcLogFielName = CTLOG_FILE_NAME_DEFAULE;
-	gLogContext.bInit = 1;
-	gLogContext.level = level;
-	gLogContext.mode = mode;
+	pLogCtx->bInit = 1;
+	pLogCtx->level = level;
+	pLogCtx->mode = mode;
 
-	if (gLogContext.mode == CTLOG_MODE_LOG2FILE)
+	pLogCtx->pMutex = CTMutexCreate();
+	if (pLogCtx->pMutex == NULL)
+		return CTLOG_EC_FAILURE;
+	if (pLogCtx->mode == CTLOG_MODE_LOG2FILE)
 	{
 		// close file handle if LogContext has been initialized
-		if (gLogContext.fpLog != NULL)
-			fclose(gLogContext.fpLog);
+		if (pLogCtx->fpLog != NULL)
+			fclose(pLogCtx->fpLog);
 		
 		if (pcFileName != NULL && pcFileName[0] != 0)
 			pcLogFielName = pcFileName;
-		gLogContext.fpLog = fopen(pcLogFielName, "wb");
-		if (gLogContext.fpLog == NULL)
+		pLogCtx->fpLog = fopen(pcLogFielName, "wb");
+		if (pLogCtx->fpLog == NULL)
 			return CTLOG_EC_FAILURE;
 	}
 	else
@@ -71,7 +78,7 @@ int CTLogInit(CTLogLevel level, CTLogMode mode, char *pcFileName)
 #ifdef _WIN32
 		CTLogOpenConsole();
 #endif // _WIN32
-		gLogContext.fpLog = stdout;
+		pLogCtx->fpLog = stdout;
 	}
 
 	return CTLOG_EC_OK;
@@ -79,11 +86,14 @@ int CTLogInit(CTLogLevel level, CTLogMode mode, char *pcFileName)
 
 int CTLogDeInit()
 {
-	if (gLogContext.mode == CTLOG_MODE_LOG2FILE)
+	CTLogContext *pLogCtx = &gLogContext;
+
+	CTMutexDestroy(pLogCtx->pMutex);
+	if (pLogCtx->mode == CTLOG_MODE_LOG2FILE)
 	{
 		// close file handle if LogContext has been initialized
-		if (gLogContext.fpLog != NULL)
-			fclose(gLogContext.fpLog);
+		if (pLogCtx->fpLog != NULL)
+			fclose(pLogCtx->fpLog);
 	}
 
 	return CTLOG_EC_OK;
@@ -182,15 +192,20 @@ static void CTLogPrint(CTLogLevel level, char *pcModuleName, char *pcMessage)
 
 static void CTLogMessage(CTLogLevel level, char *pcModuleName, char *pcFormat, va_list ap)
 {
+	CTLogContext *pLogCtx = &gLogContext;
+	char *pBuffer = pLogCtx->pBuffer;
+
 	if (level < 0 || level >= CTLOG_NUM_LOG_LEVELS)
 		return;
 
-	if (level < gLogContext.level)
+	if (level < pLogCtx->level)
 		return;
 
-	_vsnprintf(gLogBuffer, sizeof(gLogBuffer), pcFormat, ap);
-	if (gLogBuffer[strlen(gLogBuffer) - 1] == '\n')
-		gLogBuffer[strlen(gLogBuffer) - 1] = 0;
+	CTMutexLock(pLogCtx->pMutex);
+	_vsnprintf(pBuffer, sizeof(pBuffer), pcFormat, ap);
+	if (pBuffer[strlen(pBuffer) - 1] == '\n')
+		pBuffer[strlen(pBuffer) - 1] = 0;
 
-	CTLogPrint(level, pcModuleName, gLogBuffer);
+	CTLogPrint(level, pcModuleName, pBuffer);
+	CTMutexUnlock(pLogCtx->pMutex);
 }
