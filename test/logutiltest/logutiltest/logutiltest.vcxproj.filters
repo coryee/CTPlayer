@@ -21,9 +21,15 @@
     <ClCompile Include="..\..\..\util\logutil.c">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\util\mutex_win.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\util\logutil.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\util\mutexutil.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
