@@ -14,6 +14,22 @@
 						} while (0);					\
 
 #ifdef _WIN32
+
+typedef unsigned long block_value_type;
+#elif
+#define INVALID_SOCKET  -1
+#define SOCKET_ERROR    -1
+
+#define closesocket     close
+#define ioctlsocket     ioctl
+
+typedef int block_value_type;
+typedef struct timeval TIMEVAL;
+
+#define Sleep(microseconds) usleep(microseconds * 1000)
+#endif
+
+#ifdef _WIN32
 static DWORD UDPServerExecute(void *arg)
 {
 	UDPServer *pServer = (UDPServer *)arg;
