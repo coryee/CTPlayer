@@ -12,11 +12,11 @@ extern "C"
 #include <pthread.h>
 #endif
 
+#define INVALID_THREAD  NULL
 
 #ifdef _WIN32
 typedef HANDLE ThreadHandle ;
 typedef DWORD (*ThreadFunc)(void *);
-
 #else
 typedef pthread_t ThreadHandle;
 typedef int* (*ThreadFunc)(void *);
@@ -25,7 +25,7 @@ typedef int* (*ThreadFunc)(void *);
 
 // 0 success; -1 failed
 int CTCreateThread(ThreadHandle *handle, ThreadFunc func, void *arg);
-void CTCloseThreadHandle(ThreadHandle *handle);
+void CTCloseThreadHandle(ThreadHandle handle);
 
 #if defined(__cplusplus)
 }
