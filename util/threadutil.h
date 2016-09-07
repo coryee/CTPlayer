@@ -15,17 +15,17 @@ extern "C"
 #define INVALID_THREAD  NULL
 
 #ifdef _WIN32
-typedef HANDLE ThreadHandle ;
-typedef DWORD (*ThreadFunc)(void *);
+typedef HANDLE CTThreadHandle ;
+typedef DWORD (*CTThreadFunc)(void *);
 #else
-typedef pthread_t ThreadHandle;
-typedef int* (*ThreadFunc)(void *);
+typedef pthread_t CTThreadHandle;
+typedef int* (*CTThreadFunc)(void *);
 #endif
 
 
 // 0 success; -1 failed
-int CTCreateThread(ThreadHandle *handle, ThreadFunc func, void *arg);
-void CTCloseThreadHandle(ThreadHandle handle);
+int CTCreateThread(CTThreadHandle *handle, CTThreadFunc func, void *arg);
+void CTCloseThreadHandle(CTThreadHandle handle);
 
 #if defined(__cplusplus)
 }

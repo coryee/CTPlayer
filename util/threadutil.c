@@ -5,9 +5,9 @@
 #include <malloc.h>
 #endif
 
-int CTCreateThread(ThreadHandle *handle, ThreadFunc func, void *arg)
+int CTCreateThread(CTThreadHandle *handle, CTThreadFunc func, void *arg)
 {
-    ThreadHandle tmpHandle;
+    CTThreadHandle tmpHandle;
     int iRet = 0;
 #ifdef _WIN32
 	DWORD dwThreadId;
@@ -39,7 +39,7 @@ int CTCreateThread(ThreadHandle *handle, ThreadFunc func, void *arg)
 }
 
 
-void CTCloseThreadHandle(ThreadHandle handle)
+void CTCloseThreadHandle(CTThreadHandle handle)
 {
     if (handle == INVALID_THREAD)
         return;
