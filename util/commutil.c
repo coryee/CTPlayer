@@ -11,9 +11,9 @@ void CTSleep(int msec)
 }
 
 #ifdef _WIN32
-struct timeval {
-  long tv_sec, tv_usec;
-};
+// struct timeval {
+//   long tv_sec, tv_usec;
+// };
 
 // Based on: http://www.google.com/codesearch/p?hl=en#dR3YEbitojA/os_win32.c&q=GetSystemTimeAsFileTime%20license:bsd
 // See COPYING for copyright information.
