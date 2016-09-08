@@ -1,6 +1,16 @@
 #ifndef _COMMON_UTIL_H_
 #define _COMMON_UTIL_H_
 
+/*
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
+# define OS_WINDOWS
+#elif defined(linux) || defined(__linux) || defined(__linux__)
+# define OS_LINUX
+#elif defined(macintosh) || defined(__APPLE__) || defined(__APPLE_CC__)
+# define OS_MACOSX
+#endif
+*/
+
 #if defined(__cplusplus)
 extern "C"
 {
@@ -11,7 +21,9 @@ extern "C"
 #else
 #endif
 
-void CTSleep(int msec);
+extern void CTSleep(int msec);
+
+extern long long CTGetCurrentMicroseconds();
 
 #if defined(__cplusplus)
 }
