@@ -11,7 +11,7 @@ struct CTMutex
 };
 
 /* Create a mutex */
-CTMutex *CTMutexCreate(void)
+CTMutex *CTCreateMutex(void)
 {
 	CTMutex *mutex;
 
@@ -26,7 +26,7 @@ CTMutex *CTMutexCreate(void)
 }
 
 /* Free the mutex */
-void CTMutexDestroy(CTMutex * mutex)
+void CTDestroyMutex(CTMutex * mutex)
 {
     if (mutex) {
         DeleteCriticalSection(&mutex->cs);

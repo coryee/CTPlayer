@@ -31,7 +31,7 @@ struct CTMutex
     pthread_mutex_t id;
 } CTMutex;
 
-CTMutex *CTMutexCreate(void)
+CTMutex *CTCreateMutex(void)
 {
 	CTMutex *mutex;
     pthread_mutexattr_t attr;
@@ -49,7 +49,7 @@ CTMutex *CTMutexCreate(void)
     return (mutex);
 }
 
-void CTMutexDestroy(CTMutex* mutex)
+void CTDestroyMutex(CTMutex* mutex)
 {
     if (mutex) {
         pthread_mutex_destroy(&mutex->id);

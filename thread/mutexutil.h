@@ -23,7 +23,7 @@ typedef struct CTMutex CTMutex;
 /**
  *  Create a mutex, initialized unlocked.
  */
-extern CTMutex *CTMutexCreate(void);
+extern CTMutex *CTCreateMutex(void);
 
 /**
  *  Lock the mutex.
@@ -52,7 +52,7 @@ extern int CTMutexUnlock(CTMutex * mutex);
 /**
  *  Destroy a mutex.
  */
-extern void CTMutexDestroy(CTMutex * mutex);
+extern void CTDestroyMutex(CTMutex * mutex);
 
 #ifdef __cplusplus
 }

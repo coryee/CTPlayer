@@ -28,8 +28,8 @@ int gettimeofday(struct timeval *tv, void* tz)
   li.LowPart = ft.dwLowDateTime;
   li.HighPart = ft.dwHighDateTime;
   tt = (li.QuadPart - EPOCHFILETIME) / 10;
-  tv->tv_sec = tt / 1000000;
-  tv->tv_usec = tt % 1000000;
+  tv->tv_sec = (long)(tt / 1000000);
+  tv->tv_usec = (long)tt % 1000000;
 
   return 0;
 }

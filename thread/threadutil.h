@@ -24,8 +24,9 @@ typedef int* (*CTThreadFunc)(void *);
 
 
 // 0 success; -1 failed
-int CTCreateThread(CTThreadHandle *handle, CTThreadFunc func, void *arg);
-void CTCloseThreadHandle(CTThreadHandle handle);
+extern int CTCreateThread(CTThreadHandle *handle, CTThreadFunc func, void *arg);
+extern int CTWaitThread(CTThreadHandle handle);
+extern void CTCloseThreadHandle(CTThreadHandle handle);
 
 #if defined(__cplusplus)
 }

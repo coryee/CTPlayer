@@ -58,7 +58,7 @@ int CTLogInit(CTLogLevel level, CTLogMode mode, char *pcFileName)
 	pLogCtx->level = level;
 	pLogCtx->mode = mode;
 
-	pLogCtx->pMutex = CTMutexCreate();
+	pLogCtx->pMutex = CTCreateMutex();
 	if (pLogCtx->pMutex == NULL)
 		return CTLOG_EC_FAILURE;
 	if (pLogCtx->mode == CTLOG_MODE_LOG2FILE)
@@ -88,7 +88,7 @@ int CTLogDeInit()
 {
 	CTLogContext *pLogCtx = &gLogContext;
 
-	CTMutexDestroy(pLogCtx->pMutex);
+	CTDestroyMutex(pLogCtx->pMutex);
 	if (pLogCtx->mode == CTLOG_MODE_LOG2FILE)
 	{
 		// close file handle if LogContext has been initialized

@@ -38,6 +38,13 @@ int CTCreateThread(CTThreadHandle *handle, CTThreadFunc func, void *arg)
     return iRet;
 }
 
+int CTWaitThread(CTThreadHandle handle)
+{
+#ifdef _WIN32
+	WaitForSingleObject(handle, INFINITE);
+#endif
+	return 0;
+}
 
 void CTCloseThreadHandle(CTThreadHandle handle)
 {
