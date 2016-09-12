@@ -35,7 +35,12 @@ int gettimeofday(struct timeval *tv, void* tz)
 }
 #endif
 
-long long CTGetCurrentMicroseconds() 
+unsigned long CTGetMilliSeconds()
+{
+	return timeGetTime();
+}
+
+long long CTGetMicroseconds() 
 {
 	struct timeval tv;
 	gettimeofday(&tv, NULL);

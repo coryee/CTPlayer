@@ -60,7 +60,7 @@ private:
 	char m_pcFilePath[UPDS_MAX_PATH_LENGTH];
 	
 	unsigned char *m_pucBuffer;
-	ThreadHandle m_thread;
+	CTThreadHandle m_thread;
 	int m_iStop;
 	int m_iRunning;
 };
