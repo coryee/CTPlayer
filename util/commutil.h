@@ -18,12 +18,13 @@ extern "C"
 
 #ifdef _WIN32
 #include <windows.h>
+#pragma comment(lib, "Winmm.lib")
 #else
 #endif
 
 extern void CTSleep(int msec);
-
-extern long long CTGetCurrentMicroseconds();
+extern unsigned long CTGetMilliSeconds();
+extern long long CTGetMicroseconds();
 
 #if defined(__cplusplus)
 }
