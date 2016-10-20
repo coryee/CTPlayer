@@ -22,6 +22,7 @@ extern "C"
 #else
 #endif
 
+extern char *CTStrncpy(char *dst, const char *src, unsigned int size);
 extern void CTSleep(int msec);
 extern unsigned long CTGetMilliSeconds();
 extern long long CTGetMicroseconds();

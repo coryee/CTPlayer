@@ -1,5 +1,13 @@
 #include "commutil.h"
+#include <string.h>
 
+char *CTStrncpy(char *dst, const char *src, unsigned int size)
+{
+	strncpy(dst, src, size);
+	dst[size - 1] = 0;
+
+	return dst;
+}
 
 void CTSleep(int msec)
 {

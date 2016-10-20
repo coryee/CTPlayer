@@ -11,9 +11,9 @@
 
 #include "mutexutil.h"
 
-#ifdef _WIN32
-#define snprintf sprintf_s
-#endif
+// #ifdef _WIN32
+// #define snprintf sprintf_s
+// #endif
 
 #include "logutil.h"
 
