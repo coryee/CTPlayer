@@ -54,3 +54,10 @@ long long CTGetMicroseconds()
 	gettimeofday(&tv, NULL);
 	return (long long)(tv.tv_sec) * 1000000 + tv.tv_usec;
 }
+
+char *CTStrncpy(char *dst, char *src, int size)
+{
+	strncpy(dst, src, size);
+	dst[size - 1] = 0;
+	return dst;
+}
