@@ -14,7 +14,6 @@
 						} while (0);					\
 
 #ifdef _WIN32
-
 typedef unsigned long block_value_type;
 #elif
 #define INVALID_SOCKET  -1
@@ -26,17 +25,20 @@ typedef unsigned long block_value_type;
 typedef int block_value_type;
 typedef struct timeval TIMEVAL;
 
-#define Sleep(microseconds) usleep(microseconds * 1000)
+#define Sleep(millisec) usleep((millisec) * 1000);
 #endif
+
 
 #ifdef _WIN32
 static DWORD UDPServerExecute(void *arg)
+#elif
+static void *UDPServerExecute(void *arg)
+#endif
 {
 	UDPServer *pServer = (UDPServer *)arg;
-	pServer->execute();
+	pServer->Execute();
 	return(0);
 }
-#endif
 
 UDPServer::UDPServer()
 {
@@ -47,38 +49,47 @@ UDPServer::UDPServer()
 	m_pucBuffer = (unsigned char *)malloc(UDPS_BUFFER_SIZE);
 }
 
-UDPServer::UDPServer(char *pcIPAddr, unsigned int uiPort, int iMode)
-{
-	if (pcIPAddr != NULL)
-	{
-		strcpy_s(m_pcIP, UPDS_MAX_IP_LENGTH - 1, pcIPAddr);
-		m_pcIP[UPDS_MAX_IP_LENGTH - 1] = 0;
-	}
-
-	m_uiPort = uiPort;
-	m_iMode = iMode;
-
-	m_pucBuffer = (unsigned char *)malloc(UDPS_BUFFER_SIZE);
-}
-
-int UDPServer::setLocalIPPort(char *pcIPAddr, unsigned int uiPort)
+int UDPServer::SetLocalIPPort(char *pcIPAddr, unsigned int uiPort)
 {
 	if (pcIPAddr == NULL)
 		return UDPS_EC_FAILURE;
-	strcpy_s(m_pcIP, UPDS_MAX_IP_LENGTH - 1, pcIPAddr);
+	strncpy(m_pcIP, pcIPAddr, UPDS_MAX_IP_LENGTH - 1);
 	m_pcIP[UPDS_MAX_IP_LENGTH - 1] = 0;
 	m_uiPort = uiPort;
 
 	return UDPS_EC_OK;
 }
 
-int UDPServer::setMode(int iMode)
+int UDPServer::SetMode(int iMode)
 {
 	m_iMode = iMode;
 	return UDPS_EC_OK;
 }
 
-int UDPServer::setSYSBuffer(MBUFFERSYSBuffer *pSYSBuffer)
+
+UDPServer::UDPServer(const char *pcIPAddr, unsigned int uiPort, int iMode)
+{
+	if (pcIPAddr != NULL)
+	{
+		strncpy(m_pcIP, pcIPAddr, UPDS_MAX_IP_LENGTH - 1);
+		m_pcIP[UPDS_MAX_IP_LENGTH - 1] = 0;
+	}
+	m_uiPort = uiPort;
+	m_socket = INVALID_SOCKET;
+	m_iSockRecvBufSize = UDPS_RECVBUF_SIZE_DEFAULT;
+	m_iMode = iMode;
+	m_pucBuffer = (unsigned char *)malloc(UDPS_BUFFER_SIZE);
+	m_iStop = 0;
+	m_iRunning = 0;
+}
+
+UDPServer::~UDPServer()
+{
+	SAFERELEASE(m_pucBuffer);
+	closesocket(m_socket);
+}
+
+int UDPServer::SetSYSBuffer(MBUFFERSYSBuffer *pSYSBuffer)
 {
 	if (pSYSBuffer == NULL)
 		return UDPS_EC_FAILURE;
@@ -87,7 +98,7 @@ int UDPServer::setSYSBuffer(MBUFFERSYSBuffer *pSYSBuffer)
 	return UDPS_EC_OK;
 }
 
-int UDPServer::setFilePath(const char *pcFilePath)
+int UDPServer::SetFilePath(const char *pcFilePath)
 {
 	if (pcFilePath == NULL)
 		return UDPS_EC_FAILURE;
@@ -96,28 +107,33 @@ int UDPServer::setFilePath(const char *pcFilePath)
 	return UDPS_EC_OK;
 }
 
-int UDPServer::start()
+int UDPServer::SetSockRecvBufSize(int iSize)
 {
+	m_iSockRecvBufSize = iSize;
+	return UDPS_EC_OK;
+}
+
+int UDPServer::Start()
+{
+#ifdef _WIN32
 	WSADATA wsaData;
 	WORD sockVersion = MAKEWORD(2, 2);
-	if (WSAStartup(sockVersion, &wsaData) != 0)
-	{
-		return UDPS_EC_FAILURE;
-	}
-
-	m_s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	if (m_s == INVALID_SOCKET)
+	WSAStartup(sockVersion, &wsaData);
+#endif
+	m_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if (m_socket == INVALID_SOCKET)
 	{
 		printf("socket error !\n");
 		return UDPS_EC_FAILURE;
 	}
+	setsockopt(m_socket, SOL_SOCKET, SO_RCVBUF, (const char *)&m_iSockRecvBufSize, sizeof(m_iSockRecvBufSize));
 
 	struct sockaddr_in serAddr;
 	serAddr.sin_family = AF_INET;
 	serAddr.sin_port = htons(m_uiPort);
-//	inet_pton(AF_INET, m_pcIP, &(serAddr.sin_addr.S_un.S_addr));
-    serAddr.sin_addr.S_un.S_addr = inet_addr(m_pcIP); // INADDR_ANY;
-	if (bind(m_s, (struct sockaddr *)&serAddr, sizeof(serAddr)) == SOCKET_ERROR)
+	inet_pton(AF_INET, m_pcIP, &(serAddr.sin_addr.S_un.S_addr));
+	//serAddr.sin_addr.S_un.S_addr = inet_pton(AF_INET, m_pcIP); // INADDR_ANY;
+	if (bind(m_socket, (struct sockaddr *)&serAddr, sizeof(serAddr)) == SOCKET_ERROR)
 	{
 		printf("bind error !\n");
 		return UDPS_EC_FAILURE;
@@ -137,7 +153,7 @@ int UDPServer::start()
 	return UDPS_EC_OK;
 }
 
-int UDPServer::stop()
+int UDPServer::Stop()
 {
 	m_iStop = 1;
 	while (m_iRunning)
@@ -148,7 +164,7 @@ int UDPServer::stop()
 	return UDPS_EC_OK;
 }
 
-int UDPServer::execute()
+int UDPServer::Execute()
 {
 	FILE *fpOutput = NULL;
 	m_iRunning = 1;
@@ -164,12 +180,14 @@ int UDPServer::execute()
 		}
 	}
 
+	int iTotalNum = 0;
 	while (!m_iStop)
 	{
-		int iRet = recv(m_pucBuffer, UDPS_BUFFER_SIZE);
+		int iRet = Recv(m_pucBuffer, UDPS_BUFFER_SIZE);
 		if (iRet > 0)
 		{
-//			printf("got packet, len = %d\n", iRet);
+			iTotalNum += iRet;
+			printf("got packet, len = %d, total_bytes = %d\n", iRet, iTotalNum);
 			if (m_iMode == UDPS_WORK_MODE_DUMP2FILE)
 			{
 				if (iRet != fwrite(m_pucBuffer, 1, iRet, fpOutput))
@@ -184,16 +202,15 @@ int UDPServer::execute()
 				{
 					Sleep(1);
 				}
-				
-				MBUFFERSYSAppendData(m_pucBuffer, iRet, m_pSYSBuffer);
-// 				int iLen2End = MBUFFERSYSBufferSpaceAvailableToEnd(m_pSYSBuffer);
-// 				if (iLen2End >= iRet)
-// 					memcpy(MBUFFERSYSAppendDataPos(m_pSYSBuffer), m_pucBuffer, iRet);
-// 				else
-// 				{
-// 					memcpy(MBUFFERSYSAppendDataPos(m_pSYSBuffer), m_pucBuffer, iLen2End);
-// 					memcpy(MBUFFERSYSAppendDataPos(m_pSYSBuffer), m_pucBuffer + iLen2End, iRet - iLen2End);
-// 				}
+
+				int iLen2End = MBUFFERSYSBufferSpaceAvailableToEnd(m_pSYSBuffer);
+				if (iLen2End >= iRet)
+					memcpy(MBUFFERSYSAppendDataPos(m_pSYSBuffer), m_pucBuffer, iRet);
+				else
+				{
+					memcpy(MBUFFERSYSAppendDataPos(m_pSYSBuffer), m_pucBuffer, iLen2End);
+					memcpy(MBUFFERSYSAppendDataPos(m_pSYSBuffer), m_pucBuffer + iLen2End, iRet - iLen2End);
+				}
 			}
 		}
 		else
@@ -205,30 +222,26 @@ int UDPServer::execute()
 	}
 	m_iRunning = 0;
 
+	printf("totalNum = %d\n", iTotalNum);
+
 	return UDPS_EC_OK;
 }
 
-int UDPServer::send(unsigned char * pucBuffer, unsigned int iBufferSize)
+int UDPServer::Send(unsigned char * pucBuffer, unsigned int iBufferSize)
 {
 	return 0;
 }
 
 // return the number of bytes received if succeed.
 // or return the errcode of recvfrom
-int UDPServer::recv(unsigned char * pucBuffer, unsigned int iBufferSize)
+int UDPServer::Recv(unsigned char * pucBuffer, unsigned int iBufferSize)
 {
 	struct sockaddr_in remoteAddr;
 	int iAddrLen = sizeof(remoteAddr);
-	return recvfrom(m_s, (char *)m_pucBuffer, UDPS_BUFFER_SIZE, 0, (sockaddr *)&remoteAddr, &iAddrLen);
+	return recvfrom(m_socket, (char *)m_pucBuffer, UDPS_BUFFER_SIZE, 0, (sockaddr *)&remoteAddr, &iAddrLen);
 }
 
-int UDPServer::getPeerAddrInfo(struct sockaddr * peerSockAddr, int *piAddrLen)
+int UDPServer::GetPeerAddrInfo(struct sockaddr * peerSockAddr, int *piAddrLen)
 {
 	return UDPS_EC_OK;
-}
-
-UDPServer::~UDPServer()
-{
-	SAFERELEASE(m_pucBuffer);
-	closesocket(m_s);
 }
