@@ -6,7 +6,11 @@ extern "C"
 #endif
 #include <stdio.h>
 #include <stdarg.h>
+#include "mutexutil.h"
 
+#define CTLOG_MAX_PATH     256
+#define CTLOG_MAX_BUFFER   512
+#define CTLOG_MAX_FILE_SIZE 0xFFFFFFFF
 
 #define CTLOG_EC_OK			0
 #define CTLOG_EC_FAILURE	-1
@@ -25,20 +29,45 @@ typedef enum
 	CTLOG_MODE_LOG2FILE,
 } CTLogMode;
 
-typedef struct CTLogContext CTLogContext;
+typedef struct CTLogContext {
+    CTLogLevel      level;
+    CTLogMode       mode;
+    FILE            *fpLog;
+    char            pcFileName[CTLOG_MAX_PATH];
+    unsigned int    logFileSize;
+    unsigned int    curFileSize;
+    int             numFilesToReserve;
+    char            **pFileNames;
+    int             curFileIdx;
+    int             bInit;
+    CTMutex         *pMutex;
+    char            pBuffer[CTLOG_MAX_BUFFER];
+} CTLogContext;
+
 
 // return CTLOG_EC_OK if succeed, or CTLOG_EC_FAILURE if failed
-extern int CTLogInit(CTLogLevel level, CTLogMode mode, char *pcFileName);
-extern int CTLogDeInit();
+extern int CTLogInit(CTLogContext *pLogContext, CTLogLevel level, CTLogMode mode, const char *pcFileName);
+extern int CTLogDeInit(CTLogContext *pLogContext);
+extern int CTLogSetLogFileSize(CTLogContext *pLogContext, unsigned int size);
+extern int CTLogSetLogFile(CTLogContext *pLogContext, const char *pcFilePath);
+extern int CTLogSetNumLogFilesToReserve(CTLogContext *pLogContext, int iNumFiles);
+extern void CTLogDebugEx(CTLogContext *pLogContext, const char *pcModuleName, const char *pcFormat, ...);
+extern void CTLogDebug(CTLogContext *pLogContext, const char *pcFormat, ...);
+extern void CTLogInfoEx(CTLogContext *pLogContext, const char *pcModuleName, const char *pcFormat, ...);
+extern void CTLogInfo(CTLogContext *pLogContext, const char *pcFormat, ...);
+extern void CTLogErrorEx(CTLogContext *pLogContext, const char *pcModuleName, const char *pcFormat, ...);
+extern void CTLogError(CTLogContext *pLogContext, const char *pcFormat, ...);
 
-extern void CTLogDebugEx(char *pcModuleName, char *pcFormat, ...);
-extern void CTLogDebug(char *pcFormat, ...);
-extern void CTLogInfoEx(char *pcModuleName, char *pcFormat, ...);
-extern void CTLogInfo(char *pcFormat, ...);
-extern void CTLogErrorEx(char *pcModuleName, char *pcFormat, ...);
-extern void CTLogError(char *pcFormat, ...);
-
-
+// CTLogSXXX will use the singleton log context
+// return CTLOG_EC_OK if succeed, or CTLOG_EC_FAILURE if failed
+extern int CTLogSInit(CTLogLevel level, CTLogMode mode, char *pcFileName);
+extern int CTLogSDeInit();
+extern void CTLogSDebugEx(const char *pcModuleName, const char *pcFormat, ...);
+extern void CTLogSDebug(const char *pcFormat, ...);
+extern void CTLogSInfoEx(const char *pcModuleName, const char *pcFormat, ...);
+extern void CTLogSInfo(const char *pcFormat, ...);
+extern void CTLogSErrorEx(const char *pcModuleName, const char *pcFormat, ...);
+extern void CTLogSError(const char *pcFormat, ...);
 
 // use case 1
 //#define mylogfunc(fmt, ...)	CTLogDebugEx("main", fmt, __VA_ARGS__)
